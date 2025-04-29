@@ -1,62 +1,96 @@
 #ifndef MICRAS_PROXY_ARGB_CPP
 #define MICRAS_PROXY_ARGB_CPP
 
-#include "proxy/argb.hpp"
+#include "micras/proxy/argb.hpp"
 #include "physics/argb.hpp"
+#include "physics/box2d_micrasbody.hpp"
+#include <iostream>
 
 namespace micras::proxy {
 template <uint8_t num_of_leds>
-TArgb<num_of_leds>::TArgb(const Config& config, b2BodyId bodyId) :
-    brightness{config.max_brightness / 100.0F},
-    bodyId{bodyId} {
-
-    this->attachArgb({0.0f, 0.0f}, {0.02f, 0.02f}, {static_cast<uint8_t>(235 * this->brightness), static_cast<uint8_t>(100 * this->brightness), static_cast<uint8_t>(25 * this->brightness)});
-    
-    for (auto& argb : this->argbs) {
-        argb.turnOff();
+TArgb<num_of_leds>::TArgb(const Config& config) : 
+    micrasBody(config.micrasBody), 
+    uncertainty(config.uncertainty), 
+    brightness(config.brightness) {
+    // Connect to physical ARGBs from Box2DMicrasBody
+    if (micrasBody) {
+        auto& physicalArgbs = micrasBody->getArgbs();
+        for (size_t i = 0; i < physicalArgbs.size(); ++i) {
+            if (physicalArgbs[i]) {
+                argbRefs.emplace_back(std::ref(*physicalArgbs[i]));
+            }
+        }
+        
+        if (argbRefs.empty()) {
+            std::cerr << "Warning: No physical ARGBs were found in the MicrasBody" << std::endl;
+        }
+    } else {
+        std::cerr << "Warning: No MicrasBody provided, ARGB proxy will not be functional" << std::endl;
     }
 }
 
 template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::attachArgb(b2Vec2 localPosition, b2Vec2 size, micrasverse::core::Color color) {
-    this->argbs.push_back(micrasverse::physics::Argb(this->bodyId, localPosition, size, color));
+TArgb<num_of_leds>::~TArgb() {
+    // No cleanup needed for references
 }
 
 template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::set_color(const micrasverse::core::Color& color, uint8_t index) {
-    this->argbs.at(index).setColor({color.r, color.g, color.b});
-}
-
-template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::set_color(const micrasverse::core::Color& color) {
-    for (auto& argb : this->argbs) {
-        argb.setColor({color.r, color.g, color.b});
+void TArgb<num_of_leds>::turn_on() {
+    for (auto& argbRef : this->argbRefs) {
+        argbRef.get().turnOn();
     }
-}
-
-template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::set_colors(const std::array<micrasverse::core::Color, num_of_leds>& colors) {
-    for (uint8_t i = 0; i < num_of_leds; i++) {
-        this->set_color(colors.at(i), i);
-    }
-
-}
-
-template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::turn_off(uint8_t index) {
-    this->argbs.at(index).turnOff();
 }
 
 template <uint8_t num_of_leds>
 void TArgb<num_of_leds>::turn_off() {
-    for (auto& argb : this->argbs) {
-        argb.turnOff();
+    for (auto& argbRef : this->argbRefs) {
+        argbRef.get().turnOff();
     }
 }
 
 template <uint8_t num_of_leds>
-void TArgb<num_of_leds>::encode_color(const micrasverse::core::Color& color, uint8_t index) {
+void TArgb<num_of_leds>::update() {
+    // Physical ARGBs are updated by the physics system
+    // We don't need to update them here
+}
 
+template <uint8_t num_of_leds>
+void TArgb<num_of_leds>::attachArgb(b2Vec2 localPosition, b2Vec2 size, micrasverse::types::Color color) {
+    // This method is no longer needed since we use physical ARGBs
+    // However, we keep it for API compatibility
+    std::cerr << "Warning: attachArgb called on proxy, but it has no effect. ARGBs are managed by Box2DMicrasBody" << std::endl;
+}
+
+template <uint8_t num_of_leds>
+void TArgb<num_of_leds>::set_color(const micrasverse::types::Color& color, uint8_t index) {
+    if (index < argbRefs.size()) {
+        argbRefs[index].get().turnOn(color);
+    } else {
+        std::cerr << "Warning: Attempted to set color for ARGB LED " << static_cast<int>(index) 
+                  << " but only " << argbRefs.size() << " LEDs are available" << std::endl;
+    }
+}
+
+template <uint8_t num_of_leds>
+void TArgb<num_of_leds>::set_color(const micrasverse::types::Color& color) {
+    for (auto& argbRef : this->argbRefs) {
+        argbRef.get().turnOn(color);
+    }
+}
+
+template <uint8_t num_of_leds>
+void TArgb<num_of_leds>::set_colors(const std::array<micrasverse::types::Color, num_of_leds>& colors) {
+    for (uint8_t i = 0; i < std::min(static_cast<size_t>(num_of_leds), argbRefs.size()); i++) {
+        this->set_color(colors.at(i), i);
+    }
+}
+
+template <uint8_t num_of_leds>
+void TArgb<num_of_leds>::encode_color(const micrasverse::types::Color& color, uint8_t index) {
+    if (index < argbRefs.size()) {
+        argbRefs[index].get().encode_color(color, index);
+        argbRefs[index].get().turnOn();
+    }
 }
 
 }  // namespace micras::proxy

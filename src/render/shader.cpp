@@ -5,10 +5,6 @@ namespace micrasverse::render {
 // Constructor
 Shader::Shader() {}
 
-Shader::Shader(const char* vertexShaderPath, const char* fragmentShaderPath) {
-    generate(vertexShaderPath, fragmentShaderPath);
-}
-
 void Shader::generate(const char* vertexShaderPath, const char* fragmentShaderPath) {
     
     // Compile vertex shader
@@ -34,6 +30,10 @@ void Shader::generate(const char* vertexShaderPath, const char* fragmentShaderPa
     // Delete the shaders as they are now linked to the program
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+}
+
+void Shader::use() {
+    glUseProgram(this->id);
 }
 
 void Shader::activate(const glm::mat4 view, const glm::mat4 projection) {

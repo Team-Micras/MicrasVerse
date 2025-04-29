@@ -69,7 +69,9 @@
         "variant": "cpp",
         "bitset": "cpp",
         "regex": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "codecvt": "cpp",
+        "*.tpp": "cpp"
     },
     "cmake.sourceDirectory": "C:/Area de trabalho/CPP/Micrasverse/external/box2d"
 }

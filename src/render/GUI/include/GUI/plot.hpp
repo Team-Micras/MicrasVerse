@@ -1,7 +1,8 @@
 #ifndef PLOT_HPP
 #define PLOT_HPP
 
-#include "physics/micrasbody.hpp"
+#include "physics/box2d_micrasbody.hpp"
+#include "micras/proxy/proxy_bridge.hpp"
 
 #include "imgui.h"
 
@@ -33,9 +34,13 @@ public:
 
     void init();
 
-    void draw(micrasverse::physics::MicrasBody& micrasBody);
+    void draw(micrasverse::physics::Box2DMicrasBody& micrasBody, micras::ProxyBridge& proxyBridge, bool simulationIsPaused = false);
 
     void destroy();
+    
+    bool showPlots;
+    float updateInterval;
+    float timeSinceLastUpdate;
 };
 
 

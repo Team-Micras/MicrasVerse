@@ -52,6 +52,8 @@ void Camera::updateCameraPos(const CameraDirection direction, const double dt) {
     case CameraDirection::DOWN:
         position -= cameraUp * velocity;
         break;
+    case CameraDirection::NONE:
+        break;
     }
 }
 
@@ -90,7 +92,7 @@ void Camera::updateCameraVectors() {
     cameraUp = glm::normalize(glm::cross(cameraRight, cameraFront));
 }
 
-void Camera::update(const micrasverse::physics::MicrasBody& micrasBody) {
+void Camera::update(const micrasverse::physics::Box2DMicrasBody& micrasBody) {
     // Update camera position to follow Micras
     if (this->followMicras) {
         this->position = {micrasBody.getPosition().x, micrasBody.getPosition().y, this->position.z};

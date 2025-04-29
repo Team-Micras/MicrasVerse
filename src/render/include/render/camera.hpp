@@ -1,8 +1,8 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
-#include "config/constants.hpp"
-#include "physics/micrasbody.hpp"
+#include "constants.hpp"
+#include "physics/box2d_micrasbody.hpp"
 
 #define GLFW_INCLUDE_NONE   // GLFW include guard
 #include "glad/glad.h"
@@ -52,7 +52,7 @@ public:
     bool centerMaze {true};
 
     // Default and initialize with position
-    Camera(const glm::vec3 position = glm::vec3(MAZE_FLOOR_HALFWIDTH, MAZE_FLOOR_HALFHEIGHT, 3.75f));
+    Camera(const glm::vec3 position = glm::vec3(-0.3f, micrasverse::MAZE_FLOOR_HALFHEIGHT, 4.75f));
 
     // Modifiers
 
@@ -76,7 +76,7 @@ public:
     // Get zoom value for camera
     float getZoom();
 
-    void update(const micrasverse::physics::MicrasBody& micrasBody);
+    void update(const micrasverse::physics::Box2DMicrasBody& micrasBody);
 
 private:
     // Private modifier
